@@ -67,7 +67,7 @@ Pedal depth profiles sampled in a ±2-beat window around cadence onsets reveal s
 - **HC** (n = 410): gentler lift (~0.16 at cadence), consistent with the harmonic tension remaining unresolved
 - **IAC / DC**: more varied profiles reflecting their intermediate cadential weight
 
-This pedal-depth analogue of the local tempo analysis in Hu & Widmer (2023, Fig. 4) shows that pedaling, like tempo, is a musically structured expressive parameter that responds systematically to harmonic syntax.
+This pedal-depth analogue of the local tempo analysis in Hu & Widmer (2023, Fig. 4) confirms that pedaling, like tempo, is a musically structured expressive parameter that responds systematically to harmonic syntax.
 
 ## Setup
 
