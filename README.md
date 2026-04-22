@@ -59,7 +59,7 @@ Thresholds derived from the full Batik-plays-Mozart corpus (n = 10,245 pedal eve
 | `note-blend` | AR median > 2.68 | Notes bleeding past natural IOI (overlap axis) |
 | `other` | none of the above | |
 
-## Key Finding
+## Additional Key Finding
 
 Pedal depth profiles sampled in a ±2-beat window around cadence onsets reveal systematic differences by cadence type across all 36 movements:
 
