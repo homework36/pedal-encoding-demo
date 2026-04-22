@@ -55,7 +55,7 @@ Thresholds derived from the full Batik-plays-Mozart corpus (n = 10,245 pedal eve
 | `touch` | dur < 0.30 IBI, full depth | Very brief: accent or staccato articulation aid |
 | `anticipatory` | δ_onset < −0.10 IBI | Pressed before beat: legato across barline |
 | `extended` | dur > 1.07 IBI | Pedal held beyond one beat (duration axis) |
-| `rhythmic` | δ_onset ≥ −0.10, δ_offset < 0.05, 0.30 ≤ dur ≤ 1.07 | Classical Wechselpedal: at/after beat, clean release |
+| `rhythmic` | δ_onset ≥ −0.10, δ_offset < 0.05, 0.30 ≤ dur ≤ 1.07 | On or after beat, clean release |
 | `note-blend` | AR median > 2.68 | Notes bleeding past natural IOI (overlap axis) |
 | `other` | none of the above | |
 
