@@ -1,10 +1,9 @@
 """
-Three-layer pedal encoding framework (Zhang et al., MEC 2026).
-
 Layer I  – physical:    raw CC64 pedal events (onset, offset, depth trajectory)
 Layer II – contextual:  score-aligned descriptors (δ_onset, δ_offset, AR)
 Layer III– semantic:    interpretable intent labels
 """
+from __future__ import annotations
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -259,8 +258,8 @@ def layer3_labels(events: list[PedalEvent]) -> None:
         if dur_ibi < _DUR_TOUCH and max_d >= _DEPTH_HALF:
             labels.append('touch')
 
-        # anticipatory: pressed before beat — legato connection across barline
-        if d_on < _DON_ANTICIPATE and max_d >= _DEPTH_HALF and dur_ibi >= _DUR_TOUCH:
+        # anticipatory: pressed before beat, released after beat — legato across barline
+        if d_on < _DON_ANTICIPATE and d_off > 0 and max_d >= _DEPTH_HALF and dur_ibi >= _DUR_TOUCH:
             labels.append('anticipatory')
 
         # extended: pedal held beyond one beat — duration-based, independent of overlap
