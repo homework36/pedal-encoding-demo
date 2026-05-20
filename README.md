@@ -88,7 +88,7 @@ conda activate pedal
 pip install partitura numpy scipy pandas matplotlib jupyter
 ```
 
-Set `DATASET = '../../batik_plays_mozart-main'` at the top of each notebook.
+Set `DATASET  = 'path to Batik-plays-Mozart dataset directory'` at the top of each notebook.
 
 ---
 
