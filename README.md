@@ -14,7 +14,7 @@ Full implementation of all three layers on KV279 mvt. 1.
 
 - **Layer I:** segments 240 discrete pedal events from the CC64 stream by threshold crossing
 - **Layer II:** computes score-aligned descriptors for each event: δ_onset and δ_offset (timing of pedal press/release relative to nearest beat, normalized by IBI) and articulation ratio AR (effective sounding duration / IOI, per voice)
-- **Layer III:** assigns Mozart-calibrated semantic labels; each event can carry multiple labels reflecting its compound function. In KV279 mvt. 1, the most commonly assigned label is *rhythmic* (53% of events), followed by *extended* (22%) and *note-blend* (18%). Percentages sum beyond 100% because labels are not mutually exclusive.
+- **Layer III:** assigns Mozart-calibrated semantic labels; each event can carry multiple labels reflecting its compound function. In KV279 mvt. 1, the most commonly assigned label is *rhythmic* (53% of events), followed by *extended* (22%) and *note-blend* (18%). Percentages sum beyond 100% because labels are not mutually exclusive. One pedal event can have more than one labels.
 - **Figure 3:** four-panel aligned view showing piano roll (score context), raw CC64 depth (Layer I), timing deltas (Layer II), and semantic label color bands (Layer III)
 
 ### 03: Pedal depth profiles at cadences (full corpus)
@@ -45,8 +45,7 @@ pedal-encoding-demo/
 
 ### Layer III labels (Mozart-calibrated)
 
-The original thresholds were designed generically; applying them naively to Mozart produced degenerate results (83% of events labeled as heavy note overlap) because even a brief pedal press extends notes past a short IOI in classical texture. To fix this, we ran all three layers across the full 36-movement corpus (n = 10,245 events) and set thresholds from the resulting distributions: δ_onset p25 = −0.10, dur_ibi p10/p75 = 0.30/1.07, AR p75 = 2.68, and depth median ~1.0 (over 75% of events reach full pedal depth, so 0.50 is the right half-pedal cutoff). Across the full corpus, the most commonly assigned labels are *rhythmic* (40% of events), *extended* (23%), and *note-blend* (22%), with *anticipatory* at 19%. These are co-occurrence rates across all 36 movements; a single event may carry more than one label.
-
+The original thresholds were designed generically; applying them naively to Mozart produced degenerate results (83% of events labeled as heavy note overlap) because even a brief pedal press extends notes past a short IOI in classical texture. To fix this, we ran all three layers across the full 36-movement corpus (n = 10,245 events) and set thresholds from the resulting distributions: δ_onset p25 = −0.10, dur_ibi p10/p75 = 0.30/1.07, AR p75 = 2.68, and depth median ~1.0 (over 75% of events reach full pedal depth, so 0.50 is the right half-pedal cutoff). 
 Thresholds derived from the full Batik-plays-Mozart corpus (n = 10,245 pedal events):
 
 | Label | Criterion | Interpretation |
