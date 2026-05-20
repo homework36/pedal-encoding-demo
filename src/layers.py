@@ -214,15 +214,14 @@ def layer2_descriptors(events: list[PedalEvent], beat_qs: np.ndarray,
 #   dur_ibi:      p10=0.30,  med=0.75, p75=1.07, p90=1.92
 #   AR_median:    p25=1.03,  med=1.60, p75=2.68
 
-# Labels stay anchored to Zhang et al.'s framework but thresholds are
-# corpus-calibrated. Priority order: half-pedal > touch > anticipatory >
-# extended > rhythmic > note-blend > other.
+# Labels follow the paper's framework with corpus-calibrated thresholds.
+# Check order: rhythmic > half-pedal > touch > anticipatory > pedaled-legato > other.
 
-_AR_CORPUS_P75  = 2.68   # note-blend: top quartile of AR
 _DUR_TOUCH      = 0.30   # touch: bottom decile of dur_ibi
-_DUR_SUSTAIN    = 1.07   # extended: top quartile of dur_ibi
+_DUR_RHYTHMIC   = 1.50   # rhythmic duration cap
 _DEPTH_HALF     = 0.50   # half-pedal: well below corpus median depth
-_DON_ANTICIPATE = -0.10  # anticipatory: p25 of delta_onset
+_DON_RHYTHMIC   = -0.30  # rhythmic: allow press up to 30% IBI before beat
+_DON_ANTICIPATE = -0.10  # anticipatory: clearly before beat (p25 of delta_onset)
 
 
 def layer3_labels(events: list[PedalEvent]) -> None:
@@ -230,13 +229,12 @@ def layer3_labels(events: list[PedalEvent]) -> None:
     Assign Mozart-calibrated semantic labels in-place.
     Events may carry multiple labels reflecting compound function.
 
-      half-pedal   – shallow depression (max_d < 0.50); coloristic use
-      touch        – very brief event (dur_ibi < 0.30); accent/articulation
-      anticipatory – pressed clearly before beat (δ_onset < -0.10); legato across barline
-      extended     – held > 1 beat (dur_ibi > 1.07); pedal duration exceeds one beat unit
-      rhythmic     – Wechselpedal: at/after beat, released before next (classical standard)
-      note-blend   – high note overlap (AR_median > p75); notes bleeding past natural IOI
-      other        – does not fit any category clearly
+      rhythmic       – near-beat press, moderate duration; classical rhythmic pedal
+      half-pedal     – shallow depression (max_d < 0.50); coloristic use
+      touch          – very brief event (dur_ibi < 0.30); accent/articulation
+      anticipatory   – pressed before beat, AR > 1; legato carry-over (d_off not required)
+      pedaled-legato – pressed after beat, released past next beat, AR > 1; syncopated sustain
+      other          – does not fit any category clearly
     """
     for ev in events:
         if ev.delta_onset is None:
@@ -246,33 +244,32 @@ def layer3_labels(events: list[PedalEvent]) -> None:
         d_off   = ev.delta_offset
         max_d   = float(np.max(ev.depths)) if len(ev.depths) > 0 else 0.0
         dur_ibi = ev.dur_ibi if ev.dur_ibi is not None else 1.0
+        # AR defaults to 1.0 (= no extension beyond natural note duration) when no score
+        # notes overlap the event, e.g. a pedal pressed during a rest.
         ar_med  = float(np.median(ev.ar_notes)) if ev.ar_notes else 1.0
 
         labels = []
 
-        # half-pedal: shallow depression for coloristic resonance
+        # rhythmic: on-beat press, moderate duration. No d_off or AR constraint.
+        # §3.3: δ_onset ≥ 0. Duration bounds separate from touch and pedaled-legato.
+        if d_on >= _DON_RHYTHMIC and _DUR_TOUCH <= dur_ibi <= _DUR_RHYTHMIC:
+            labels.append('rhythmic')
+
+        # half-pedal: shallow depression — coloristic use at any duration
         if max_d < _DEPTH_HALF:
             labels.append('half-pedal')
 
-        # touch: very brief — accent or staccato articulation aid
-        if dur_ibi < _DUR_TOUCH and max_d >= _DEPTH_HALF:
+        # touch: very brief — any depth
+        if dur_ibi < _DUR_TOUCH:
             labels.append('touch')
 
-        # anticipatory: pressed before beat, released after beat — legato across barline
-        if d_on < _DON_ANTICIPATE and d_off > 0 and max_d >= _DEPTH_HALF and dur_ibi >= _DUR_TOUCH:
+        # anticipatory: pressed before beat, AR > 1 confirms notes carry over — d_off not required
+        if d_on < _DON_ANTICIPATE and ar_med > 1.0 and max_d >= _DEPTH_HALF and dur_ibi >= _DUR_TOUCH:
             labels.append('anticipatory')
 
-        # extended: pedal held beyond one beat — duration-based, independent of overlap
-        if dur_ibi > _DUR_SUSTAIN and max_d >= _DEPTH_HALF:
-            labels.append('extended')
-
-        # rhythmic (Wechselpedal): at/after beat, released before next
-        if (d_on >= _DON_ANTICIPATE and d_off < 0.05
-                and _DUR_TOUCH <= dur_ibi <= _DUR_SUSTAIN):
-            labels.append('rhythmic')
-
-        # note-blend: high note overlap relative to corpus norm (AR-based, not duration)
-        if ar_med > _AR_CORPUS_P75 and max_d >= _DEPTH_HALF and dur_ibi >= _DUR_TOUCH:
-            labels.append('note-blend')
+        # pedaled-legato: pressed after beat, released near/past next beat, AR > 1; syncopated sustain
+        # d_off > -0.20 tolerates long pedals where release lands just before a beat
+        if d_on > 0 and d_off > -0.20 and ar_med > 1.0 and dur_ibi > _DUR_TOUCH and max_d >= _DEPTH_HALF:
+            labels.append('pedaled-legato')
 
         ev.labels = labels if labels else ['other']
