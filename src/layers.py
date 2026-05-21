@@ -224,17 +224,21 @@ _DON_RHYTHMIC   = -0.30  # rhythmic: allow press up to 30% IBI before beat
 _DON_ANTICIPATE = -0.10  # anticipatory: clearly before beat (p25 of delta_onset)
 
 
-def layer3_labels(events: list[PedalEvent]) -> None:
+def layer3_labels(events: list[PedalEvent],
+                  depth_half: float = _DEPTH_HALF) -> None:
     """
-    Assign Mozart-calibrated semantic labels in-place.
-    Events may carry multiple labels reflecting compound function.
+    Assign semantic labels in-place.  Events may carry multiple labels.
 
       rhythmic       – near-beat press, moderate duration; classical rhythmic pedal
-      half-pedal     – shallow depression (max_d < 0.50); coloristic use
+      half-pedal     – shallow depression (max_d < depth_half); coloristic use
       touch          – very brief event (dur_ibi < 0.30); accent/articulation
       anticipatory   – pressed before beat, AR > 1; legato carry-over (d_off not required)
       pedaled-legato – pressed after beat, released past next beat, AR > 1; syncopated sustain
       other          – does not fit any category clearly
+
+    depth_half defaults to _DEPTH_HALF (0.50, Mozart-corpus calibrated).
+    Pass a higher value (e.g. 0.75) for MAESTRO recordings where the physical
+    pedal range maps to higher CC64 values.
     """
     for ev in events:
         if ev.delta_onset is None:
@@ -250,13 +254,14 @@ def layer3_labels(events: list[PedalEvent]) -> None:
 
         labels = []
 
-        # rhythmic: on-beat press, moderate duration. No d_off or AR constraint.
-        # §3.3: δ_onset ≥ 0. Duration bounds separate from touch and pedaled-legato.
-        if d_on >= _DON_RHYTHMIC and _DUR_TOUCH <= dur_ibi <= _DUR_RHYTHMIC:
+        # rhythmic: on-beat press, moderate duration, full depression.
+        # Requiring max_d >= depth_half separates timing-based rhythmic from
+        # depth-based half-pedal — the two cannot fire on the same event.
+        if d_on >= _DON_RHYTHMIC and _DUR_TOUCH <= dur_ibi <= _DUR_RHYTHMIC and max_d >= depth_half:
             labels.append('rhythmic')
 
         # half-pedal: shallow depression — coloristic use at any duration
-        if max_d < _DEPTH_HALF:
+        if max_d < depth_half:
             labels.append('half-pedal')
 
         # touch: very brief — any depth
@@ -264,12 +269,12 @@ def layer3_labels(events: list[PedalEvent]) -> None:
             labels.append('touch')
 
         # anticipatory: pressed before beat, AR > 1 confirms notes carry over — d_off not required
-        if d_on < _DON_ANTICIPATE and ar_med > 1.0 and max_d >= _DEPTH_HALF and dur_ibi >= _DUR_TOUCH:
+        if d_on < _DON_ANTICIPATE and ar_med > 1.0 and max_d >= depth_half and dur_ibi >= _DUR_TOUCH:
             labels.append('anticipatory')
 
         # pedaled-legato: pressed after beat, released near/past next beat, AR > 1; syncopated sustain
         # d_off > -0.20 tolerates long pedals where release lands just before a beat
-        if d_on > 0 and d_off > -0.20 and ar_med > 1.0 and dur_ibi > _DUR_TOUCH and max_d >= _DEPTH_HALF:
+        if d_on > 0 and d_off > -0.20 and ar_med > 1.0 and dur_ibi > _DUR_TOUCH and max_d >= depth_half:
             labels.append('pedaled-legato')
 
         ev.labels = labels if labels else ['other']
